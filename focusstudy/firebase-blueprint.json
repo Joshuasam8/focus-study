@@ -1,0 +1,106 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Student profile, study stats, XP, and daily goals",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 100 },
+        "email": { "type": "string", "maxLength": 150 },
+        "dailyGoal": { "type": "number" },
+        "totalXP": { "type": "number" },
+        "currentStreak": { "type": "number" },
+        "longestStreak": { "type": "number" },
+        "lastStudyDate": { "type": "string", "maxLength": 20 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "email", "dailyGoal", "totalXP", "currentStreak", "longestStreak"]
+    },
+    "Task": {
+      "title": "Task",
+      "description": "A student study task planned by subject and chapter",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "subject": { "type": "string", "maxLength": 100 },
+        "chapter": { "type": "string", "maxLength": 100 },
+        "title": { "type": "string", "maxLength": 200 },
+        "date": { "type": "string", "maxLength": 20 },
+        "time": { "type": "string", "maxLength": 20 },
+        "priority": { "type": "string", "enum": ["low", "medium", "high"] },
+        "estimatedDuration": { "type": "number" },
+        "completed": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "subject", "title", "priority", "estimatedDuration", "completed"]
+    },
+    "Subject": {
+      "title": "Subject",
+      "description": "Academic course or subject with color theme and chapters",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 100 },
+        "color": { "type": "string", "maxLength": 30 },
+        "chapters": { "type": "string", "maxLength": 2000 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "name", "color"]
+    },
+    "StudySession": {
+      "title": "StudySession",
+      "description": "Recorded focus session with duration, interruptions, and earned XP",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "subject": { "type": "string", "maxLength": 100 },
+        "topic": { "type": "string", "maxLength": 150 },
+        "targetDuration": { "type": "number" },
+        "actualDuration": { "type": "number" },
+        "completed": { "type": "boolean" },
+        "interruptionsCount": { "type": "number" },
+        "xpEarned": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "subject", "topic", "targetDuration", "actualDuration", "completed", "interruptionsCount", "xpEarned"]
+    },
+    "Exam": {
+      "title": "Exam",
+      "description": "Upcoming exam schedule and target prep",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "subject": { "type": "string", "maxLength": 100 },
+        "title": { "type": "string", "maxLength": 200 },
+        "date": { "type": "string", "maxLength": 20 },
+        "time": { "type": "string", "maxLength": 20 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "subject", "title", "date"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile with study statistics and goals"
+    },
+    "/tasks/{taskId}": {
+      "schema": "Task",
+      "description": "Planned study tasks"
+    },
+    "/subjects/{subjectId}": {
+      "schema": "Subject",
+      "description": "Student subject courses"
+    },
+    "/studySessions/{sessionId}": {
+      "schema": "StudySession",
+      "description": "Completed or partial focus sessions"
+    },
+    "/exams/{examId}": {
+      "schema": "Exam",
+      "description": "Scheduled exam deadlines"
+    }
+  }
+}

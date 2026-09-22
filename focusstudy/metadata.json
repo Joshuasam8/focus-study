@@ -1,0 +1,6 @@
+{
+  "name": "FocusStudy",
+  "description": "Student study-planning application with distraction-free focus mode, subject planners, streak tracking, and exam countdowns.",
+  "requestFramePermissions": ["notifications"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

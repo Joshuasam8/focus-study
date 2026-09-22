@@ -1,0 +1,125 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Verification test connection doc
+    match /test/{testId} {
+      allow read: if true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['name', 'email', 'dailyGoal', 'totalXP', 'currentStreak', 'longestStreak']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.email is string && data.email.size() <= 150 &&
+             data.dailyGoal is number && data.dailyGoal >= 0 && data.dailyGoal <= 1440 &&
+             data.totalXP is number && data.totalXP >= 0 &&
+             data.currentStreak is number && data.currentStreak >= 0 &&
+             data.longestStreak is number && data.longestStreak >= 0;
+    }
+
+    function isValidTask(data) {
+      return data.keys().hasAll(['userId', 'subject', 'title', 'priority', 'estimatedDuration', 'completed']) &&
+             data.userId == request.auth.uid &&
+             data.subject is string && data.subject.size() > 0 && data.subject.size() <= 100 &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+             data.priority in ['low', 'medium', 'high'] &&
+             data.estimatedDuration is number && data.estimatedDuration >= 0 && data.estimatedDuration <= 1440 &&
+             data.completed is bool;
+    }
+
+    function isValidSubject(data) {
+      return data.keys().hasAll(['userId', 'name', 'color']) &&
+             data.userId == request.auth.uid &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.color is string && data.color.size() > 0 && data.color.size() <= 30;
+    }
+
+    function isValidStudySession(data) {
+      return data.keys().hasAll(['userId', 'subject', 'targetDuration', 'actualDuration', 'completed', 'interruptionsCount', 'xpEarned']) &&
+             data.userId == request.auth.uid &&
+             data.subject is string && data.subject.size() > 0 && data.subject.size() <= 100 &&
+             data.targetDuration is number && data.targetDuration >= 0 &&
+             data.actualDuration is number && data.actualDuration >= 0 &&
+             data.completed is bool &&
+             data.interruptionsCount is number && data.interruptionsCount >= 0 &&
+             data.xpEarned is number && data.xpEarned >= 0;
+    }
+
+    function isValidExam(data) {
+      return data.keys().hasAll(['userId', 'subject', 'title', 'date']) &&
+             data.userId == request.auth.uid &&
+             data.subject is string && data.subject.size() > 0 && data.subject.size() <= 100 &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+             data.date is string && data.date.size() > 0 && data.date.size() <= 20;
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(incoming());
+      allow update: if isOwner(userId) && isValidUser(incoming()) &&
+                       incoming().email == existing().email;
+      allow delete: if false;
+    }
+
+    // Tasks Collection
+    match /tasks/{taskId} {
+      allow get: if isSignedIn() && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(taskId) && incoming().userId == request.auth.uid && isValidTask(incoming());
+      allow update: if isSignedIn() && isValidId(taskId) && existing().userId == request.auth.uid && incoming().userId == request.auth.uid && isValidTask(incoming());
+      allow delete: if isSignedIn() && isValidId(taskId) && existing().userId == request.auth.uid;
+    }
+
+    // Subjects Collection
+    match /subjects/{subjectId} {
+      allow get: if isSignedIn() && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(subjectId) && incoming().userId == request.auth.uid && isValidSubject(incoming());
+      allow update: if isSignedIn() && isValidId(subjectId) && existing().userId == request.auth.uid && incoming().userId == request.auth.uid && isValidSubject(incoming());
+      allow delete: if isSignedIn() && isValidId(subjectId) && existing().userId == request.auth.uid;
+    }
+
+    // Study Sessions Collection
+    match /studySessions/{sessionId} {
+      allow get: if isSignedIn() && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(sessionId) && incoming().userId == request.auth.uid && isValidStudySession(incoming());
+      allow update: if false;
+      allow delete: if isSignedIn() && isValidId(sessionId) && existing().userId == request.auth.uid;
+    }
+
+    // Exams Collection
+    match /exams/{examId} {
+      allow get: if isSignedIn() && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(examId) && incoming().userId == request.auth.uid && isValidExam(incoming());
+      allow update: if isSignedIn() && isValidId(examId) && existing().userId == request.auth.uid && incoming().userId == request.auth.uid && isValidExam(incoming());
+      allow delete: if isSignedIn() && isValidId(examId) && existing().userId == request.auth.uid;
+    }
+  }
+}
